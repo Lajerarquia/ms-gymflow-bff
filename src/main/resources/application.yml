@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-gymflow-bff
+
+# Nada de secretos aquí: el tenant y el client id llegan por variables de entorno (.env ignorado por git).
+# Si falta AZURE_TENANT_ID o AZURE_CLIENT_ID el BFF no arranca, a propósito.
+gymflow:
+  security:
+    tenant-id: ${AZURE_TENANT_ID}
+    # Tokens v2 (requestedAccessTokenVersion: 2 en el manifiesto)
+    issuer: https://login.microsoftonline.com/${AZURE_TENANT_ID}/v2.0
+    jwk-set-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID}/discovery/v2.0/keys
+    # v2 → aud = <CLIENT_ID> (GUID); v1 → aud = api://<CLIENT_ID>. Se aceptan ambos.
+    audiences:
+      - ${AZURE_CLIENT_ID}
+      - api://${AZURE_CLIENT_ID}
+    required-scope: access_as_user
+    # Orígenes permitidos para CORS en desarrollo local (separados por coma)
+    cors-allowed-origins: ${GYMFLOW_CORS_ORIGINS:http://localhost:4200}
+  services:
+    # Nombres de los contenedores en la red interna de Docker Compose
+    reservations-url: ${RESERVATIONS_URL:http://localhost:8081}
+    catalog-url: ${CATALOG_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
